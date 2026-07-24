@@ -24,4 +24,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Backup for Windows:** The responsible branch for `szakysave's` backup for windows has been tested and fixed
+---
+
+## [v1.1.0] - 2026-07-24
+
+### Fixed
+- **Log Exporter Filter:** Fixed regex pattern for Backup Session Report matching in `szakylog`
+- **Szakycron UX prompt:** Updated backup frequency selection prompt range from `[1-3]` to `[1-4]`
+- **Uninstaller:** Improved deletion script which is able to delete crontab comments which were used by `szakycron`
+
+### Added
+- **Cold Backup support:** Automatically detects running Docker containers and native database services (`mysql`, `postgresql`, `mariadb`, `redis`, `mongo`) and safely stops them before transfer.
+- **Auto-restart & Traps**: Ensures databases are always restarted on completion or unexpected interruption (`INT`, `TERM`, `EXIT`).
+- **Target cleanup on failure**: Incomplete backup directories are automatically removed from the target machine (Windows & Linux compatible) if the rsync session fails or gets cancelled.
+- **Process locking**: Prevents overlapping execution using `/tmp/szakyops.lock` via `flock`.
+
 

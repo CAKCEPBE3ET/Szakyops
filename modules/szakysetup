@@ -4,9 +4,9 @@
 #  Project:     Szakyops 
 #  File:        modules/szakysetup
 #  Description: Interactive configurator for szakysave
-#  Author:      Stephen Szaky (info@szakysoft.hu)
+#  Author:      Stephen/Szaky (info@szakysoft.hu)
 #  Website:     https://szakysoft.hu
-#  Version:     1.0.2
+#  Version:     1.1.0
 #  License:     MIT
 # ==============================================================================
 
@@ -55,23 +55,41 @@ SSH_KEY=${SSH_KEY:-$DEFAULT_KEY}
 printf "  ${C_CYN}%-45s${C_DEF}: " "5. Source paths (space separated)"
 read -r INPUT_SOURCES
 
-printf "  ${C_CYN}%-45s${C_DEF} (y/N): " "Is the target a Windows host? (win_target)"
+printf "  ${C_CYN}%-45s${C_DEF} (y/N): " "6. Is the target a Windows host? (win_target)"
 read -r WIN_CHOICE
 if [[ "$WIN_CHOICE" =~ ^[Yy]$ ]]; then
     IS_WINDOWS="true"
 else
     IS_WINDOWS="false"
 fi
+#Modified/Created v1.1.0
+echo ""
+echo -e "  ${C_CYN}7. Select Target Power Management Mode:${C_DEF}"
+echo -e "     1) Disabled (No WOL, No Shutdown - target is always online)"
+echo -e "     2) WOL Startup ONLY (Wake target via WOL, leave it running after backup)"
+echo -e "     3) WOL Startup + Auto Shutdown (Wake target via WOL, power off after backup)"
+printf "  Select option [1-3, default: 1]: "
+read -r PM_CHOICE
 
-printf "  ${C_CYN}%-45s${C_DEF} (y/N): " "Enable Wake-on-LAN for target? (use_wol)"
-read -r WOL_CHOICE
 TARGET_MAC=""
-if [[ "$WOL_CHOICE" =~ ^[Yy]$ ]]; then
-    USE_WOL="true"
-    printf "  ${C_CYN}%-45s${C_DEF}: " "   -> Enter Target MAC address"
+case "$PM_CHOICE" in
+    2)
+        USE_WOL="true"
+        AUTO_SHUTDOWN="false"
+        ;;
+    3)
+        USE_WOL="true"
+        AUTO_SHUTDOWN="true"
+        ;;
+    *)
+        USE_WOL="false"
+        AUTO_SHUTDOWN="false"
+        ;;
+esac
+#######################
+if [ "$USE_WOL" == "true" ]; then
+    printf "     ${C_CYN}-> Enter Target MAC address${C_DEF}: "
     read -r TARGET_MAC
-else
-    USE_WOL="false"
 fi
 
 CONFIG_DIR="/opt/szakyops/config"

@@ -1,4 +1,4 @@
-# Szakyops v1.0.2
+# Szakyops v1.1.0
 ### An integrated system for system monitoring and automated backups
 
 Thank you for visiting the project page or downloading Szakyops!
@@ -99,7 +99,7 @@ In this module, you can get information about the actual state of the computer. 
 
 **Security & System**
 - System Health — `SysErr` means systemd errors, `zombie` means the number of zombie processes
-- Backup Status — *under research*
+- Backup Status
 
 **CPU & RAM**
 - CPU name
@@ -136,11 +136,11 @@ verifies target network availability before initiating the file
 transfer, utilizes Wake-on-LAN (WOL) to wake up remote servers if needed, and seamlessly supports both Linux 
 and Windows target environments.
 
-In the v1.0.2 the module is able to:
-- make a backup from a Linux Server to another Linux server without/with WOL and automated shutdown, but CANNOT only WOL startup
-- make a backup from a Linux Server to a Windows server without/with WOL and automated shutdown, but CANNOT only WOL startup
-
-There will be added a 3rd option for backup with only WOL startup without automated shutdown
+#### What's new in v1.1.0:
+- **Cold Backup support**: Detects running Docker database containers and native database services (`mysql`, `postgresql`, `mariadb`, `redis`, `mongo`) and gracefully stops them before the transfer to guarantee data consistency, automatically restarting them afterward via signal traps (`EXIT`, `INT`, `TERM`).
+- **Fail-Safe Target Cleanup**: Automatically removes partial or interrupted backup directories from the destination machine (Windows & Linux compatible) if the process is cancelled (`Ctrl+C`) or fails.
+- **Process Locking (`flock`)**: Uses a system lock (`/tmp/szakyops.lock`) to prevent concurrent or overlapping backup sessions.
+- **Flexible WOL Execution**: Added a third power management option allowing WOL target wake-up without triggering an automated shutdown after completion.
 
 *: If you configure a **Windows host** as your backup destination (`IS_WINDOWS="true"`), please ensure that:
 1. **OpenSSH Server** is installed and running on the Windows machine.
@@ -173,5 +173,5 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 If you get into any trouble, would like to express your opinion, or have an idea, you are welcome to contact me:
 
-**Website:** www.szakysoft.hu  
+**Website:** www.szakysoft.hu
 **Email:** info@szakysoft.hu

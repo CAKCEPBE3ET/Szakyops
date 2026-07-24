@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
 # ==============================================================================
-#  Project:     Szakyops 
+#  Project:     Szakyops
 #  File:        szakyops
 #  Description: Main Entry Point & Management CLI for Szakyops Toolkit
 #  Author:      Stephen Szaky (info@szakysoft.hu)
 #  Website:     https://szakysoft.hu
-#  Version:     1.0.2
+#  Version:     1.1.0
 #  License:     MIT
 # ==============================================================================
 

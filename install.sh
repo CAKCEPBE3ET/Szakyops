@@ -4,9 +4,9 @@
 #  Project:     Szakyops 
 #  File:        install.sh
 #  Description: Installer of Szakyops
-#  Author:      Stephen Szaky (info@szakysoft.hu)
+#  Author:      Stephen/Szaky (info@szakysoft.hu)
 #  Website:     https://szakysoft.hu
-#  Version:     1.0.2
+#  Version:     1.1.0
 #  License:     MIT
 # ==============================================================================
 

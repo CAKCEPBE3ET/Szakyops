@@ -4,9 +4,9 @@
 #  Project:     Szakyops 
 #  File:        modules/szakylog
 #  Description: Logmanager module
-#  Author:      Stephen Szaky (info@szakysoft.hu)
+#  Author:      Stephen/Szaky (info@szakysoft.hu)
 #  Website:     https://szakysoft.hu
-#  Version:     1.0.2
+#  Version:     1.0.3
 #  License:     MIT
 # ==============================================================================
 
@@ -115,7 +115,7 @@ run_szakylog() {
                         END_TIME=$(echo "$KEYWORD" | cut -d'-' -f2)
 
                         awk -v start="$START_TIME" -v end="$END_TIME" '
-                            $0 ~ "Status Report:" || $0 ~ "📊 Szakyfetch Status Report:" {
+			    $0 ~ "Status Report:" || $0 ~ "📊 Szakyfetch Status Report:" || $0 ~ "Backup Session Report:" { #Modified v1.0.3
                                 match($0, /[0-2][0-9]:[0-5][0-9]/)
                                 if (RSTART > 0) {
                                     t = substr($0, RSTART, 5)
@@ -130,7 +130,7 @@ run_szakylog() {
                         ' "$selected_log" > "$tmp_filtered" || true
                     else
                         awk -v search="$KEYWORD" '
-                            $0 ~ "Status Report:" || $0 ~ "📊 Szakyfetch Status Report:" {
+			    $0 ~ "Status Report:" || $0 ~ "📊 Szakyfetch Status Report:" || $0 ~ "Backup Session Report:" { #Modified v1.0.3
                                 if ($0 ~ search) {
                                     p=1
                                 } else {

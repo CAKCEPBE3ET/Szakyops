@@ -6,7 +6,7 @@
 #  Description: Simple backup program for szakyops
 #  Author:      Stephen Szaky (info@szakysoft.hu)
 #  Website:     https://szakysoft.hu
-#  Version:     1.0.2
+#  Version:     1.1.0
 #  License:     MIT
 # ==============================================================================
 
@@ -158,6 +158,13 @@ run_szakysave() {
     }
 
     do_backup() {
+	#Created v1.1.0
+	exec 200>/tmp/szakyops.lock
+	flock -n 200 || {
+	    echo -e "${C_RED}Another backup session is already running!${C_DEF}"
+	    return 1
+	}
+	###############
         local TIMESTAMP=$(date '+%Y-%m-%d_%H-%M-%S')
         local TIMESTAMP_DEST="$TARGET_DEST/$TIMESTAMP"
         local SRC_COUNT="${#SOURCES[@]}"
@@ -182,6 +189,50 @@ run_szakysave() {
         else
             echo -e "${C_YEL}No previous backup found. Full transfer will occur!${C_DEF}"
         fi
+
+        #CREATED v1.1.0
+        local RUNNING_DB_CONTAINERS=$(docker ps --filter "status=running" --format "{{.Names}}" 2>/dev/null | grep -E -i "db|mysql|postgres|mariadb|redis|mongo" || true)
+        local RUNNING_NATIVE_DBS=$(systemctl list-units --type=service --state=running 2>/dev/null | grep -E -i "mysql|postgresql|mariadb|redis|mongod" | awk '{print $1}' || true)
+	cleanup_databases(){
+	    if [ "${RSYNC_EXIT:-1}" -ne 0 ] && [ -n "$TIMESTAMP_DEST" ]; then
+		echo -e "\n${C_RED}⚠️ Backup interrupted/failed! Cleaning up incomplete backup on target...${C_DEF}"
+
+                if [ "$IS_WINDOWS" == "true" ]; then
+		    local WIN_CLEAN_PATH=$(echo "$TIMESTAMP_DEST" | sed -E 's/^\/([a-zA-Z])\//\1:\\/' | tr '/' '\\')
+                    ssh -n -i "$TARGET_SSH_KEY" -o StrictHostKeyChecking=no "$TARGET_USER@$TARGET" "powershell -Command \"Remove-Item -Recurse -Force '$WIN_CLEAN_PATH\' -ErrorAction SilentlyContinue\"" 2>/dev/null || true
+                else
+                    ssh -n -i "$TARGET_SSH_KEY" -o StrictHostKeyChecking=no "$TARGET_USER@$TARGET" "rm -rf \"$TIMESTAMP_DEST\"" 2>/dev/null || true
+                fi
+		TIMESTAMP_DEST=""
+            fi
+
+	    if [ -n "$RUNNING_DB_CONTAINERS" ]; then
+                echo -e "${C_GRN}▶️  Restarting Docker databases...${C_DEF}"
+                echo "$RUNNING_DB_CONTAINERS" | xargs -r docker start >/dev/null 2>&1
+            fi
+
+            if [ -n "$RUNNING_NATIVE_DBS" ]; then
+                echo -e "${C_GRN}▶️  Restarting native databases...${C_DEF}"
+                echo "$RUNNING_NATIVE_DBS" | xargs -r systemctl start >/dev/null 2>&1
+            fi
+        }
+
+	trap cleanup_databases EXIT INT TERM
+
+	if [ -n "$RUNNING_DB_CONTAINERS" ] || [ -n "$RUNNING_NATIVE_DBS" ]; then
+            echo -e "${C_YEL}⏸️  Shutting down live databases (Cold Backup)...${C_DEF}"
+
+            if [ -n "$RUNNING_DB_CONTAINERS" ]; then
+                echo -e "  ${C_CYN}Shutting down Docker DBs:${C_DEF} $(echo $RUNNING_DB_CONTAINERS | tr '\n' ' ')"
+                echo "$RUNNING_DB_CONTAINERS" | xargs -r docker stop >/dev/null 2>&1
+            fi
+
+            if [ -n "$RUNNING_NATIVE_DBS" ]; then
+                echo -e "  ${C_CYN}Shutting down Native DBs:${C_DEF} $(echo $RUNNING_NATIVE_DBS | tr '\n' ' ')"
+                echo "$RUNNING_NATIVE_DBS" | xargs -r systemctl stop >/dev/null 2>&1
+            fi
+        fi
+	################################
 
         echo -e "${C_YEL}--- [ Rsync Transfer Progress ] ---${C_DEF}"
 
@@ -217,6 +268,10 @@ run_szakysave() {
         fi
 
         local RSYNC_EXIT=$?
+	#Created v1.1.0
+	cleanup_databases
+	trap - EXIT INT TERM
+	####################
 
         echo -e "\n${C_YEL}-----------------------------------${C_DEF}"
 
@@ -278,12 +333,11 @@ run_szakysave() {
         if [ "$IS_WINDOWS" == "true" ]; then
             print_row "🔍" "Detecting Rsync" "Host:" "$TARGET" "Action:" "Searching"
             WIN_RSYNC_PATH=$(ssh -n -i "$TARGET_SSH_KEY" -o StrictHostKeyChecking=no "$TARGET_USER@$TARGET" "where rsync 2>nul || where /r \"C:\Program Files\" rsync.exe 2>nul" | head -n 1 | tr -d '\r' | tr -d '\n')
-            
+
             if [ -z "$WIN_RSYNC_PATH" ]; then
                 WIN_RSYNC_PATH="C:\Program Files\Git\usr\bin\rsync.exe"
             fi
         fi
-        
         print_line_dash
         do_backup
         print_line_dash
@@ -294,6 +348,6 @@ run_szakysave() {
     if [ "$IS_CRON" == "true" ]; then
         echo -e "\n\n"
     fi
-    
+
     set -e
 }
